@@ -1,0 +1,36 @@
+kops.sh
+---------
+#vim .bashrc
+#export PATH=$PATH:/usr/local/bin/
+#source .bashrc
+
+
+#! /bin/bash
+#add access_key & secrete key from excel Sheet
+aws configure
+#used to download kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+#used to download kops
+wget https://github.com/kubernetes/kops/releases/download/v1.25.0/kops-linux-amd64
+#giving the permissions
+chmod +x kops-linux-amd64 kubectl
+mv kubectl /usr/local/bin/kubectl
+mv kops-linux-amd64 /usr/local/bin/kops
+#creating a buckets and configure with cluster
+aws s3api create-bucket --bucket vasanth1.srcas --region us-east-1
+aws s3api put-bucket-versioning --bucket vasanth1.srcas --region us-east-1 --versioning-configuration Status=Enabled
+export KOPS_STATE_STORE=s3://vasanth1.srcas
+#creating the cluster
+kops create cluster --name vasanth.k8s.local --zones us-east-1a,us-east-1b --master-size t2.medium --master-count 1 --master-volume-size 40 --node-size t2.medium --node-count 2 --node-volume-size 40
+kops update cluster --name vasanth.k8s.local --yes --admin
+
+use "sh kops.sh" command to run the script
+wait for 5 mins
+now check the cluster is ready or not : kubectl get no
+it will result 3 nodes in ready state
+
+
+TO DELETE THE CLUSTER 
+export KOPS_STATE_STORE=your-bucket-name
+kops get cluster 
+kops delete cluster cluster-name --yes
